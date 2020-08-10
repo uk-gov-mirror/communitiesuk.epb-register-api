@@ -215,11 +215,6 @@ The Improved Energy Ratings that result from carrying out a Suggested Improvemen
 			<xs:element name="Improvement-Details">
 				<xs:complexType>
 					<xs:choice>
-						<xs:element name="Improvement-Texts" type="ImprovementTexts">
-							<xs:annotation>
-								<xs:documentation>For backward compatibility only</xs:documentation>
-							</xs:annotation>
-						</xs:element>
 						<xs:element name="Improvement-Number" type="RecommendationSummaryCode"/>
 					</xs:choice>
 				</xs:complexType>
