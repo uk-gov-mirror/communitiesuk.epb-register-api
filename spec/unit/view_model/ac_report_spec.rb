@@ -23,18 +23,33 @@ describe ViewModel::AcReportWrapper do
         xml: Samples.xml("CEPC-NI-8.0.0", "ac-report"),
         unsupported_fields: [],
         different_fields: {},
+        different_buried_fields: {
+          address: {
+            address_id: "RRN-0000-0000-0000-0000-0000",
+          },
+        },
       },
       {
         schema_name: "CEPC-7.1",
         xml: Samples.xml("CEPC-7.1", "ac-report"),
         unsupported_fields: [],
         different_fields: {},
+        different_buried_fields: {
+          address: {
+            address_id: "LPRN-432167890000",
+          },
+        },
       },
       {
         schema_name: "CEPC-7.0",
         xml: Samples.xml("CEPC-7.0", "ac-report"),
         unsupported_fields: [],
         different_fields: {},
+        different_buried_fields: {
+          address: {
+            address_id: "LPRN-432167890000",
+          },
+        },
       },
       {
         schema_name: "CEPC-6.0",
@@ -89,6 +104,11 @@ describe ViewModel::AcReportWrapper do
           air_handling_systems: [],
           terminal_units: [],
           system_controls: [],
+        },
+        different_buried_fields: {
+          address: {
+            address_id: "LPRN-432167890000",
+          },
         },
       },
       {
@@ -145,6 +165,11 @@ describe ViewModel::AcReportWrapper do
           terminal_units: [],
           system_controls: [],
         },
+        different_buried_fields: {
+          address: {
+            address_id: "LPRN-432167890000",
+          },
+        },
       },
       {
         schema_name: "CEPC-4.0",
@@ -200,6 +225,11 @@ describe ViewModel::AcReportWrapper do
           terminal_units: [],
           system_controls: [],
         },
+        different_buried_fields: {
+          address: {
+            address_id: "LPRN-432167890000",
+          },
+        },
       },
     ].freeze
 
@@ -210,6 +240,7 @@ describe ViewModel::AcReportWrapper do
       date_of_expiry: "2030-05-04",
       date_of_registration: "2020-05-20",
       address: {
+        address_id: "UPRN-432167890000",
         address_line1: "2 Lonely Street",
         address_line2: nil,
         address_line3: nil,
