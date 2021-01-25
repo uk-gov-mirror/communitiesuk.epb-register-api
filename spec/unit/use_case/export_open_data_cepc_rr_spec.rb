@@ -5,7 +5,7 @@ describe UseCase::ExportOpenDataCepcrr do
       let(:scheme_id) { add_scheme_and_get_id }
       let(:expected) { described_class.new }
       let(:date_today) { DateTime.now.strftime("%F") }
-      # number in test in 2 x 4 (number of recomendations in each lodgement)
+      # number in test in 2 x 4 (number of recommendations in each lodgement)
       let(:number_assessments_to_test) { 5 }
       let(:cepc_plus_rr_xml) { Nokogiri.XML Samples.xml("CEPC-8.0.0", "cepc+rr") }
       let(:cepc_plus_rr_xml_id) { cepc_plus_rr_xml.at("//CEPC:RRN") }
@@ -14,12 +14,7 @@ describe UseCase::ExportOpenDataCepcrr do
       let(:cepc_minus_rr_xml_id) { cepc_minus_rr_xml.at("//CEPC:RRN") }
       let(:cepc_plus_rr_xml_date) { cepc_plus_rr_xml.at("//CEPC:Registration-Date") }
       let(:expected_values) { Samples::ViewModels::CepRr.report_test_hash}
-
-
-
-      let(:exported_data) {
-        described_class.new.execute
-      }
+      let(:exported_data) { described_class.new.execute }
 
 
       before do
@@ -48,11 +43,8 @@ describe UseCase::ExportOpenDataCepcrr do
           schema_name: "CEPC-8.0.0",
           )
 
-
-
         # @TODO: create a lodgement for CEPC  whose date is not valid
-
-        #create a lodgement for cepc that should not be returned
+        # create a lodgement for cepc that should not be returned
         cepc_minus_rr_xml_id.children = "0000-0000-0000-0000-0010"
         lodge_assessment(
           assessment_body: cepc_minus_rr_xml.to_xml,
@@ -70,7 +62,7 @@ describe UseCase::ExportOpenDataCepcrr do
       end
 
 
-
+      # use a single assertion to test both rows to avoid duplicating insertions
       it 'should export the data for short in the first 2 rows' do
         expect(exported_data[0]).to eq({:cO2_Impact=>"HIGH",
                                         :recommendation=>"Consider replacing T8 lamps with retrofit T5 conversion kit.",

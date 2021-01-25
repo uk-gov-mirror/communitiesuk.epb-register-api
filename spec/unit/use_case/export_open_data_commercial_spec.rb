@@ -4,41 +4,21 @@ describe UseCase::ExportOpenDataCommercial do
 
   context "when creating the open data reporting release" do
     describe "for the commercial certificates and reports" do
-      let(:scheme_id) { add_scheme_and_get_id }
 
-      let(:non_domestic_xml) { Nokogiri.XML Samples.xml("CEPC-8.0.0", "cepc") }
-      let(:non_domestic_assessment_id) { non_domestic_xml.at("//CEPC:RRN") }
-      let(:non_domestic_assessment_date) do non_domestic_xml.at("//CEPC:Registration-Date") end
-      let(:number_assments_to_test) { 2 }
+      let(:number_assessments_to_test) {2}
 
-      # Lodge a dec to ensure it is not exported
-      let(:domestic_xml) { Nokogiri.XML Samples.xml("CEPC-8.0.0", "dec") }
-      let(:domestic_assessment_id) { domestic_xml.at("RRN") }
-      let(:domestic_assessment_date) { domestic_xml.at("Registration-Date") }
+      before(:all) do
+        scheme_id =   add_scheme_and_get_id
+        non_domestic_xml =  Nokogiri.XML Samples.xml("CEPC-8.0.0", "cepc")
+        non_domestic_assessment_id =   non_domestic_xml.at("//CEPC:RRN")
+        non_domestic_assessment_date = non_domestic_xml.at("//CEPC:Registration-Date")
 
-      # @TODO filter data correctly for CEPC
-      let(:exported_data) do
-        described_class.new.execute
-      end
+        # Lodge a dec to ensure it is not exported
+        domestic_xml =   Nokogiri.XML Samples.xml("CEPC-8.0.0", "dec")
+        domestic_assessment_id= domestic_xml.at("RRN")
+        domestic_assessment_date =  domestic_xml.at("Registration-Date")
 
-      let(:date_today) { DateTime.now.strftime("%F") }
-      let(:expected_values) do
-        Samples::ViewModels::Cepc.report_test_hash.merge(
-          { lodgement_date: date_today},
-        )
-      end
-      let(:expected_values_row_1) do
-        Samples.update_test_hash(
-          expected_values,
-          {
-            rrn: "0000-0000-0000-0000-0001",
-            lodgement_date: date_today,
 
-          },
-        )
-      end
-
-      before(:example) do
         add_assessor(
           scheme_id,
           "SPEC000000",
@@ -88,14 +68,34 @@ describe UseCase::ExportOpenDataCommercial do
 
       end
 
-      it "returns the correct number of assessments in the CSV" do
-        expect(exported_data.length).to eq(number_assments_to_test)
+      let(:exported_data) do described_class.new.execute end
+
+      let(:date_today) { DateTime.now.strftime("%F") }
+      let(:expected_values) do
+        Samples::ViewModels::Cepc.report_test_hash.merge(
+          { lodgement_date: date_today},
+        )
+      end
+      let(:expected_values_row_1) do
+        Samples.update_test_hash(
+          expected_values,
+          {
+            rrn: "0000-0000-0000-0000-0001",
+            lodgement_date: date_today,
+
+          },
+        )
       end
 
-      # @TODO once tests have completed refactor to write one assertion for each row and compare to hash rather than for each column
 
-      #1st row to test
-      #write at test for each key in test hash
+
+      it "returns the correct number of assessments in the CSV" do
+        expect(exported_data.length).to eq(number_assessments_to_test)
+      end
+
+
+      # 1st row to test
+      # write at test for each key in test hash
       Samples::ViewModels::Cepc
         .report_test_hash
         .keys

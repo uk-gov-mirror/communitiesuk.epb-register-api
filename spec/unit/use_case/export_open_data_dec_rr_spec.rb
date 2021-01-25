@@ -66,7 +66,6 @@ describe UseCase::ExportOpenDataDecrr do
           expect(exported_data.length).to eq(number_assessments_to_test)
       end
 
-
       it 'should export the data for short in the first 2 rows' do
         expect(exported_data[0]).to eq({:cO2_Impact=>"MEDIUM",
                                         :recommendation=>"Consider thinking about maybe possibly getting a solar panel but only one.",

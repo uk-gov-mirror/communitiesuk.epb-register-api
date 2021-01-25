@@ -11,7 +11,7 @@ module UseCase
     def execute(args = {})
       view_model_array = []
 
-      # #use gateway to make db calls
+      # use gateway to make db calls
       # call gateway to get data set
       assessments = @gateway.assessments_for_open_data("CEPC")
 

@@ -3,20 +3,19 @@ describe UseCase::ExportOpenDataDomestic do
 
   context "when creating the open data reporting release" do
     describe "for the domestic certificates and reports" do
-      let(:scheme_id) { add_scheme_and_get_id }
 
-      let(:domestic_xml) { Nokogiri.XML Samples.xml("RdSAP-Schema-20.0.0") }
-      let(:domestic_assessment_id) { domestic_xml.at("RRN") }
-      let(:domestic_assessment_date) { domestic_xml.at("Registration-Date")  }
 
-      let(:domestic_sap_xml) { Nokogiri.XML Samples.xml("SAP-Schema-18.0.0") }
-      let(:domestic_sap_assessment_id) { domestic_sap_xml.at("RRN") }
-      let(:domestic_sap_assessment_date) do
-        domestic_sap_xml.at("Registration-Date")
-      end
-      let(:domestic_sap_assessment_level) { domestic_sap_xml.at("Level") }
+      before(:all) do
+        # variables used into the test are local to the context so don't need to be in let(:)
+        scheme_id =add_scheme_and_get_id
+        domestic_xml = Nokogiri.XML Samples.xml("RdSAP-Schema-20.0.0")
+        domestic_assessment_id =  domestic_xml.at("RRN")
+        domestic_assessment_date =  domestic_xml.at("Registration-Date")
+        domestic_sap_xml = Nokogiri.XML Samples.xml("SAP-Schema-18.0.0")
+        domestic_sap_assessment_id = domestic_sap_xml.at("RRN")
+        domestic_sap_assessment_date  = domestic_sap_xml.at("Registration-Date")
+        domestic_sap_assessment_level =  domestic_sap_xml.at("Level")
 
-      before do
         add_assessor(
           scheme_id,
           "SPEC000000",
