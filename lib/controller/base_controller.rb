@@ -161,5 +161,11 @@ module Controller
       content_type :text
       error_response(404, "NOT_FOUND", "Method not found")
     end
+
+    error Boundary::RequestError do |error|
+      error_response error.code || 400,
+                     error.title,
+                     error.message || error.class.name
+    end
   end
 end

@@ -26,14 +26,6 @@ module Controller
       case e
       when UseCase::FindAssessmentsByStreetNameAndTown::ParameterMissing
         error_response 400, "INVALID_REQUEST", "Required query params missing"
-      when UseCase::FindAssessmentsByPostcode::ParameterMissing
-        error_response 400, "INVALID_REQUEST", "Required query params missing"
-      when UseCase::FindAssessmentsByPostcode::AssessmentTypeNotValid
-        error_response(
-          400,
-          "INVALID_REQUEST",
-          "The requested assessment type is not valid",
-        )
       when Helper::RrnHelper::RrnNotValid
         error_response(
           400,

@@ -1,11 +1,8 @@
 module UseCase
   class FindAssessmentsByPostcode
-    class PostcodeNotValid < StandardError
-    end
-    class ParameterMissing < StandardError
-    end
-    class AssessmentTypeNotValid < StandardError
-    end
+    class PostcodeNotValid < Boundary::ValidationError; end
+    class ParameterMissing < Boundary::ValidationError; end
+    class AssessmentTypeNotValid < Boundary::ValidationError; end
 
     def initialize
       @assessments_gateway = Gateway::AssessmentsSearchGateway.new
@@ -15,14 +12,14 @@ module UseCase
       postcode&.strip!
       postcode&.upcase!
 
-      raise ParameterMissing if postcode.blank?
+      raise ParameterMissing, "Required query params missing" if postcode.blank?
 
       postcode = Helper::ValidatePostcodeHelper.new.validate_postcode(postcode)
 
       unless Regexp
                .new(Helper::RegexHelper::POSTCODE, Regexp::IGNORECASE)
                .match(postcode)
-        raise PostcodeNotValid
+        raise PostcodeNotValid, "Required query params missing"
       end
 
       result =
@@ -32,7 +29,7 @@ module UseCase
 
       { data: result.map(&:to_hash), searchQuery: postcode }
     rescue Gateway::AssessmentsSearchGateway::InvalidAssessmentType
-      raise AssessmentTypeNotValid
+      raise AssessmentTypeNotValid, "The requested assessment type is not valid"
     end
   end
 end
