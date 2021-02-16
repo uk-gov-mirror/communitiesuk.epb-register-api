@@ -24,14 +24,10 @@ module Controller
       json_api_response(code: 200, data: result, burrow_key: :assessments)
     rescue StandardError => e
       case e
-      when UseCase::FindAssessmentsByStreetNameAndTown::ParameterMissing
-        error_response 400, "INVALID_REQUEST", "Required query params missing"
       when Helper::RrnHelper::RrnNotValid
-        error_response(
-          400,
-          "INVALID_REQUEST",
-          "The requested assessment id is not valid",
-        )
+        error_response 400,
+                       "INVALID_REQUEST",
+                       "The requested assessment id is not valid"
       else
         server_error(e)
       end

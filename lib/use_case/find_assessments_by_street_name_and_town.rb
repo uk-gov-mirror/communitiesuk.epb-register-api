@@ -1,14 +1,15 @@
 module UseCase
   class FindAssessmentsByStreetNameAndTown
-    class ParameterMissing < StandardError
-    end
+    class ParameterMissing < Boundary::ValidationError; end
 
     def initialize
       @assessment_gateway = Gateway::AssessmentsSearchGateway.new
     end
 
     def execute(street_name, town, assessment_type)
-      raise ParameterMissing if street_name.blank? || town.blank?
+      if street_name.blank? || town.blank?
+        raise ParameterMissing, "Required query params missing"
+      end
 
       result =
         @assessment_gateway.search_by_street_name_and_town(
