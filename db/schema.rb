@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_13_080200) do
+ActiveRecord::Schema.define(version: 2021_04_13_110720) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "fuzzystrmatch"
@@ -24,6 +24,17 @@ ActiveRecord::Schema.define(version: 2021_04_13_080200) do
     t.string "address_line4"
     t.string "town"
     t.index ["postcode"], name: "index_address_base_on_postcode"
+  end
+
+  create_table "assessment_attribute_values", force: :cascade do |t|
+    t.integer "attribute_id", null: false
+    t.string "assessment_id", null: false
+    t.string "attribute_value", null: false
+    t.integer "attribute_value_int"
+    t.float "attribute_value_float"
+    t.index ["assessment_id"], name: "index_assessment_attribute_values_on_assessment_id"
+    t.index ["attribute_id"], name: "index_assessment_attribute_values_on_attribute_id"
+    t.index ["attribute_value"], name: "index_assessment_attribute_values_on_attribute_value"
   end
 
   create_table "assessment_attributes", primary_key: "attribute_id", force: :cascade do |t|
@@ -202,6 +213,7 @@ ActiveRecord::Schema.define(version: 2021_04_13_080200) do
     t.index ["name"], name: "index_schemes_on_name", unique: true
   end
 
+  add_foreign_key "assessment_attribute_values", "assessment_attributes", column: "attribute_id", primary_key: "attribute_id"
   add_foreign_key "assessments", "assessors", column: "scheme_assessor_id", primary_key: "scheme_assessor_id"
   add_foreign_key "assessments_xml", "assessments", primary_key: "assessment_id"
   add_foreign_key "assessors", "schemes", column: "registered_by", primary_key: "scheme_id"
