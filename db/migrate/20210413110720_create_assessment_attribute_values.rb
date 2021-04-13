@@ -12,6 +12,5 @@ class CreateAssessmentAttributeValues < ActiveRecord::Migration[6.1]
                     :assessment_attributes,
                     column: :attribute_id,
                     primary_key: :attribute_id
-
   end
 end
