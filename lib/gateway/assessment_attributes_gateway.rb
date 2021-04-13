@@ -16,6 +16,22 @@ module Gateway
       end
     end
 
+    def delete_attributes_by_assessment(assessment_id)
+      sql = <<-SQL
+              DELETE FROM assessment_attribute_values
+              WHERE assessment_id = $1
+      SQL
+
+      bindings = [
+        ActiveRecord::Relation::QueryAttribute.new(
+          "assessment_id",
+          assessment_id,
+          ActiveRecord::Type::String.new,
+          )]
+
+      ActiveRecord::Base::connection.exec_query(sql, "SQL", bindings)
+    end
+
   private
 
     def fetch_attribute_id(attribute_name)
@@ -56,14 +72,26 @@ module Gateway
       )
     end
 
+
+
     def insert_attribute_value(assessment_id, attribute_id, attribute_value)
-      insert_sql = <<-SQL
+      sql = <<-SQL
               INSERT INTO assessment_attribute_values(assessment_id, attribute_id, attribute_value, attribute_value_int, attribute_value_float)
               VALUES($1, $2, $3, $4, $5)
       SQL
 
-      attribute_value_int = Integer(attribute_value) rescue nil
-      attribute_value_float = Float(attribute_value) rescue nil
+      attribute_value_int =
+        begin
+          Integer(attribute_value)
+        rescue StandardError
+          nil
+        end
+      attribute_value_float =
+        begin
+          Float(attribute_value)
+        rescue StandardError
+          nil
+        end
 
       bindings = [
         ActiveRecord::Relation::QueryAttribute.new(
@@ -85,16 +113,16 @@ module Gateway
           "attribute_int",
           attribute_value_int,
           ActiveRecord::Type::BigInteger.new,
-          ),
+        ),
         ActiveRecord::Relation::QueryAttribute.new(
           "attribute_float",
           attribute_value_float,
           ActiveRecord::Type::Decimal.new,
-          ),
+        ),
       ]
 
       ActiveRecord::Base.connection.insert(
-        insert_sql,
+        sql,
         nil,
         nil,
         nil,

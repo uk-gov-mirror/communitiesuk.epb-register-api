@@ -64,13 +64,13 @@ describe Gateway::AssessmentAttributesGateway do
           "0000-0000-0000-0000-0001",
           "current_energy_efficiency",
           "50",
-          )
+        )
 
         gateway.add_attribute_value(
           "0000-0000-0000-0000-0001",
           "heating_cost_current",
           "365.98",
-          )
+        )
       end
 
       let(:assessement_attribute_values) do
@@ -89,7 +89,9 @@ describe Gateway::AssessmentAttributesGateway do
 
       it "row 4 will have a value in the float column for the heating_cost_current" do
         expect(assessement_attribute_values[3]["attribute_value_int"]).to be_nil
-        expect(assessement_attribute_values[3]["attribute_value_float"]).to eq(365.98)
+        expect(assessement_attribute_values[3]["attribute_value_float"]).to eq(
+          365.98,
+        )
       end
     end
 
@@ -117,12 +119,62 @@ describe Gateway::AssessmentAttributesGateway do
 
       it "the converts the string value to its relevant data type" do
         expect("hello").to be_a(String)
+      end
+
+      it 'deletes the attributes for an assesment' do
+        allow(gateway).to receive(:delete_attributes_by_assessment)
 
       end
+
     end
 
 
-  end
+    context "when we delete attribute data assessments" do
+      before do
+        gateway.add_attribute_value(
+          "0000-0000-0000-0000-0001",
+          "construction_age_band",
+          "England and Wales: 2007-2011",
+          )
+        gateway.add_attribute_value(
+          "0000-0000-0000-0000-0001",
+          "glazed_type",
+          "test",
+          )
+        gateway.add_attribute_value(
+          "0000-0000-0000-0000-0002",
+          "current_energy_efficiency",
+          "50",
+          )
+
+        gateway.add_attribute_value(
+          "0000-0000-0000-0000-0002",
+          "heating_cost_current",
+          "365.98",
+          )
+
+      end
+
+      let(:assessement_attribute_values) do
+        ActiveRecord::Base.connection.exec_query(
+          "SELECT * FROM assessment_attribute_values",
+          )
+      end
+
+      it 'should have 4 rows for the 2nd assessments' do
+        expect(assessement_attribute_values.rows.count).to eq(4)
+
+      end
+
+      it 'deletes the the attributes for one of the  assessments ' do
+        gateway.delete_attributes_by_assessment('0000-0000-0000-0000-0002')
+        expect( ActiveRecord::Base.connection.exec_query(
+          "SELECT * FROM assessment_attribute_values WHERE assessment_id ='0000-0000-0000-0000-0002'",
+          ).rows.count).to eq(0)
+
+      end
+
+    end
+    end
+
 end
-
-
