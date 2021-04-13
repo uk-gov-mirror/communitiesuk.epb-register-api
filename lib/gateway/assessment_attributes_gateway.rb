@@ -27,9 +27,19 @@ module Gateway
           "assessment_id",
           assessment_id,
           ActiveRecord::Type::String.new,
-          )]
+        ),
+      ]
 
-      ActiveRecord::Base::connection.exec_query(sql, "SQL", bindings)
+      ActiveRecord::Base.connection.exec_query(sql, "SQL", bindings)
+    end
+
+    def fetch_assesment_attributes(assessment_id)
+      #       SELECT *
+      #         FROM crosstab('SELECT  assessment_id,  attribute_name, attribute_value
+      # FROM assessment_attribute_values
+      # JOIN assessment_attributes ON assessment_attribute_values.attribute_id = assessment_attributes.attribute_id
+      # ORDER BY 1,2')
+      #       AS final_result(assessment_id varchar, construction_age_band varchar, glazed_type varchar)
     end
 
   private
@@ -71,8 +81,6 @@ module Gateway
         attribute_name_binding(attribute_name),
       )
     end
-
-
 
     def insert_attribute_value(assessment_id, attribute_id, attribute_value)
       sql = <<-SQL
@@ -121,14 +129,7 @@ module Gateway
         ),
       ]
 
-      ActiveRecord::Base.connection.insert(
-        sql,
-        nil,
-        nil,
-        nil,
-        nil,
-        bindings,
-      )
+      ActiveRecord::Base.connection.insert(sql, nil, nil, nil, nil, bindings)
     end
   end
 end
