@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_02_10_155650) do
+ActiveRecord::Schema.define(version: 2021_04_13_080200) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "fuzzystrmatch"
@@ -24,6 +24,10 @@ ActiveRecord::Schema.define(version: 2021_02_10_155650) do
     t.string "address_line4"
     t.string "town"
     t.index ["postcode"], name: "index_address_base_on_postcode"
+  end
+
+  create_table "assessment_attributes", primary_key: "attribute_id", force: :cascade do |t|
+    t.string "attribute_name", null: false
   end
 
   create_table "assessments", primary_key: "assessment_id", id: :string, force: :cascade do |t|

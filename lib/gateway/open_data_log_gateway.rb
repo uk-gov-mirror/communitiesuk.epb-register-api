@@ -4,6 +4,8 @@ module Gateway
       insert_sql = <<-SQL
             INSERT INTO open_data_logs(assessment_id, created_at, task_id, report_type)
             VALUES ($1, $2, $3, $4)
+
+
       SQL
 
       bindings = [
