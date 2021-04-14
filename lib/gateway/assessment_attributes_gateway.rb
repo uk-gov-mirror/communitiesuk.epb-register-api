@@ -1,5 +1,7 @@
 module Gateway
   class AssessmentAttributesGateway
+    # TODO: Add rrn constant and set to "asessement_id"
+
     def add_attribute(attribute_name)
       attribute_data = fetch_attribute_id(attribute_name)
       if attribute_data.nil?
@@ -53,18 +55,30 @@ module Gateway
     end
 
     def fetch_assessment_attributes(column_array)
-      sql =
-        "SELECT *
-              FROM crosstab('SELECT  assessment_id, attribute_name, attribute_value
+      # TODO: Update the order by to be a dymanic set based on array positions
+      # TODO ensure "assessment_id" is the first element in column_array
+      sql = <<-SQL
+              SELECT *
+              FROM crosstab($$
+              SELECT  assessment_id, attribute_name, attribute_value
               FROM assessment_attribute_values av
               JOIN assessment_attributes a ON av.attribute_id = a.attribute_id
-              ORDER BY 1,2')
-            AS columns(#{set_columns(column_array)})"
+              WHERE a.attribute_name IN (#{set_attribute_where_clause(column_array)})
+              ORDER BY 1,2
+              $$)
+            AS columns(#{set_columns(column_array)})
+      SQL
 
       ActiveRecord::Base.connection.exec_query(sql, "SQL")
     end
 
   private
+    def set_attribute_where_clause(column_array)
+      new_array = column_array.clone
+      new_array.reject! { |i| i == "assessment_id" }
+      new_array.map! { |i| "'#{i}'" }
+      new_array.join(",")
+    end
 
     def set_columns(column_array)
       columns = column_array.map { |name| name + " varchar" }

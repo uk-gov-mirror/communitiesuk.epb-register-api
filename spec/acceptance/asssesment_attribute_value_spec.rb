@@ -75,6 +75,7 @@ describe "Acceptance::AssessmentAttributeValue" do
       expect(pivoted_data.first["assessment_id"]).to eq(
         "0000-0000-0000-0000-0001",
       )
+      expect(pivoted_data.first["heating_cost_potential"]).to eq("250.34")
     end
   end
 end
