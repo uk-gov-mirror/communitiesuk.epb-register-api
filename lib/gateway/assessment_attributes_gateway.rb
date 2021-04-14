@@ -10,9 +10,13 @@ module Gateway
     end
 
     def add_attribute_value(asessement_id, attribute_name, attribute_value)
-      ActiveRecord::Base.transaction do
-        attribute_id = add_attribute(attribute_name)
-        insert_attribute_value(asessement_id, attribute_id, attribute_value)
+      unless attribute_value.empty?
+        unless attribute_name.to_s == "assessment_id"
+          ActiveRecord::Base.transaction do
+            attribute_id = add_attribute(attribute_name)
+            insert_attribute_value(asessement_id, attribute_id, attribute_value)
+          end
+        end
       end
     end
 
@@ -33,12 +37,27 @@ module Gateway
       ActiveRecord::Base.connection.exec_query(sql, "SQL", bindings)
     end
 
+    def fetch_assessments_to_add
+      sql = <<-SQL
+             SELECT a.assessment_id
+              FROM assessments a
+              WHERE NOT EXISTS (
+                  SELECT * FROM assessment_attribute_values av WHERE av.assessment_id = a.assessment_id
+            )
+      SQL
+
+      ActiveRecord::Base
+        .connection
+        .exec_query(sql, "SQL")
+        .map { |result| result }
+    end
+
     def fetch_assessment_attributes(column_array)
       sql =
         "SELECT *
               FROM crosstab('SELECT  assessment_id, attribute_name, attribute_value
-              FROM assessment_attribute_values
-              JOIN assessment_attributes ON assessment_attribute_values.attribute_id = assessment_attributes.attribute_id
+              FROM assessment_attribute_values av
+              JOIN assessment_attributes a ON av.attribute_id = a.attribute_id
               ORDER BY 1,2')
             AS columns(#{set_columns(column_array)})"
 

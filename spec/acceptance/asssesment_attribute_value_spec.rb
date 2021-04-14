@@ -36,7 +36,7 @@ def lodge_assessor
   scheme_id
 end
 
-describe UseCase::ImportAssessmentAttributes do
+describe "Acceptance::AssessmentAttributeValue" do
   include RSpecRegisterApiServiceMixin
 
   context "lodge an assessment from the xml " do
@@ -45,7 +45,7 @@ describe UseCase::ImportAssessmentAttributes do
       domestic_rdsap_xml =
         get_assessment_xml(
           "RdSAP-Schema-20.0.0",
-          "0000-0000-0000-0000-0004",
+          "0000-0000-0000-0000-0001",
           test_start_date,
         )
 
@@ -61,37 +61,20 @@ describe UseCase::ImportAssessmentAttributes do
 
     let(:import_use_case) { UseCase::ImportAssessmentAttributes.new }
 
-    let(:attributes) do
-      ActiveRecord::Base.connection.exec_query(
-        "SELECT * FROM assessment_attributes",
+    let(:export_use_case) { UseCase::ExportAssessmentAttributes.new }
+
+    let(:pivoted_data) do
+      import_use_case.execute
+      export_use_case.execute(
+        %w[assessment_id heating_cost_potential total_floor_area],
       )
     end
 
-    it "reads the xml data from the lodgment" do
-      expect(import_use_case.execute("0000-0000-0000-0000-0004")).to be_a(Hash)
-    end
-
-    it "checks the database for the inserted attributes" do
-      expect(import_use_case.execute("0000-0000-0000-0000-0004")).to be_a(Hash)
-      expect(
-        ActiveRecord::Base
-          .connection
-          .exec_query(
-            "SELECT attribute_name FROM assessment_attributes WHERE attribute_name= 'heating_cost_potential'",
-          )
-          .rows
-          .first,
-      ).to eq(%w[heating_cost_potential])
-
-      expect(
-        ActiveRecord::Base
-          .connection
-          .exec_query(
-            "SELECT attribute_name FROM assessment_attributes WHERE attribute_name= 'total_floor_area'",
-          )
-          .rows
-          .first,
-      ).to eq(%w[total_floor_area])
+    it "will contain a row for one assesment" do
+      expect(pivoted_data.length).to eq(1)
+      expect(pivoted_data.first["assessment_id"]).to eq(
+        "0000-0000-0000-0000-0001",
+      )
     end
   end
 end
