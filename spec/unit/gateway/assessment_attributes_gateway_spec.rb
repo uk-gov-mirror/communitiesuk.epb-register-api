@@ -116,17 +116,9 @@ describe Gateway::AssessmentAttributesGateway do
       it "the attribute value table has two rows" do
         expect(attribute_values.rows.length).to eq(2)
       end
-
-      it "the converts the string value to its relevant data type" do
-        expect("hello").to be_a(String)
-      end
-
-      it "deletes the attributes for an assesment" do
-        allow(gateway).to receive(:delete_attributes_by_assessment)
-      end
     end
 
-    context "when we delete attribute data assessments" do
+    context "when we add multiple attributes for 3 assessments" do
       before do
         gateway.add_attribute_value(
           "0000-0000-0000-0000-0001",
@@ -136,18 +128,48 @@ describe Gateway::AssessmentAttributesGateway do
         gateway.add_attribute_value(
           "0000-0000-0000-0000-0001",
           "glazed_type",
-          "test",
+          "test 1",
         )
+
+        gateway.add_attribute_value(
+          "0000-0000-0000-0000-0001",
+          "heating_cost_current",
+          "10.98",
+        )
+
+        gateway.add_attribute_value(
+          "0000-0000-0000-0000-0002",
+          "construction_age_band",
+          "England: 1865",
+        )
+
         gateway.add_attribute_value(
           "0000-0000-0000-0000-0002",
           "current_energy_efficiency",
-          "50",
+          "40",
         )
 
         gateway.add_attribute_value(
           "0000-0000-0000-0000-0002",
           "heating_cost_current",
-          "365.98",
+          "12.55",
+        )
+
+        gateway.add_attribute_value(
+          "0000-0000-0000-0000-0003",
+          "construction_age_band",
+          "England and Wales: 1971-1987",
+        )
+        gateway.add_attribute_value(
+          "0000-0000-0000-0000-0003",
+          "glazed_type",
+          "test 3",
+        )
+
+        gateway.add_attribute_value(
+          "0000-0000-0000-0000-0003",
+          "heating_cost_current",
+          "9.45",
         )
       end
 
@@ -158,20 +180,57 @@ describe Gateway::AssessmentAttributesGateway do
       end
 
       it "should have 4 rows for the 2nd assessments" do
-        expect(assessement_attribute_values.rows.count).to eq(4)
+        expect(assessement_attribute_values.rows.count).to eq(9)
       end
 
-      it "deletes the the attributes for one of the  assessments " do
-        gateway.delete_attributes_by_assessment("0000-0000-0000-0000-0002")
-        expect(
-          ActiveRecord::Base
-            .connection
-            .exec_query(
-              "SELECT * FROM assessment_attribute_values WHERE assessment_id ='0000-0000-0000-0000-0002'",
-            )
-            .rows
-            .count,
-        ).to eq(0)
+      context "when fetching the pivoted data" do
+        let(:pivoted_data) { gateway.fetch_assessment_attributes }
+
+        it "has the correct number of rows, one for each assessment" do
+          expect(pivoted_data.rows.count).to eq(3)
+        end
+
+        it "has the correct assessments" do
+          expect(pivoted_data[0]["assessment_id"]).to eq(
+            "0000-0000-0000-0000-0001",
+          )
+          expect(pivoted_data[1]["assessment_id"]).to eq(
+            "0000-0000-0000-0000-0002",
+          )
+          expect(pivoted_data[2]["assessment_id"]).to eq(
+            "0000-0000-0000-0000-0003",
+          )
+        end
+
+        it "has a single column for each of the attributes with the relevant values" do
+          expect(pivoted_data[0]["construction_age_band"]).to eq(
+            "England and Wales: 2007-2011",
+          )
+          expect(pivoted_data[1]["construction_age_band"]).to eq(
+            "England: 1865",
+          )
+          expect(pivoted_data[2]["construction_age_band"]).to eq(
+            "England and Wales: 1971-1987",
+          )
+        end
+      end
+
+      context "when one asssement is deleted" do
+        before do
+          gateway.delete_attributes_by_assessment("0000-0000-0000-0000-0002")
+        end
+
+        it "there are attributes for that assessment  " do
+          expect(
+            ActiveRecord::Base
+              .connection
+              .exec_query(
+                "SELECT * FROM assessment_attribute_values WHERE assessment_id ='0000-0000-0000-0000-0002'",
+              )
+              .rows
+              .count,
+          ).to eq(0)
+        end
       end
     end
   end
