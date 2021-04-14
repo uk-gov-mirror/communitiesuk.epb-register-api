@@ -27,12 +27,11 @@ describe Gateway::AssessmentAttributesGateway do
     end
 
     it "does not return an additional row where a duplication has been entered" do
-      gateway.add_attribute("test")
-      expect(attributes.rows.length).to_not eq(3)
+      expect(gateway.add_attribute("test")).to eq(1)
+      expect(attributes.rows.length).to eq(2)
     end
 
     it "can access the id of the insert regardless of whether it is created or not" do
-      expect(gateway.add_attribute("test")).to eq(1)
       expect(gateway.add_attribute("new one")).to eq(3)
     end
 
@@ -184,7 +183,11 @@ describe Gateway::AssessmentAttributesGateway do
       end
 
       context "when fetching the pivoted data" do
-        let(:pivoted_data) { gateway.fetch_assessment_attributes }
+        let(:pivoted_data) do
+          gateway.fetch_assessment_attributes(
+            %w[assessment_id construction_age_band glazed_type],
+          )
+        end
 
         it "has the correct number of rows, one for each assessment" do
           expect(pivoted_data.rows.count).to eq(3)
@@ -215,12 +218,12 @@ describe Gateway::AssessmentAttributesGateway do
         end
       end
 
-      context "when one asssement is deleted" do
+      context "when we delete attribute values for a single assessment" do
         before do
           gateway.delete_attributes_by_assessment("0000-0000-0000-0000-0002")
         end
 
-        it "there are attributes for that assessment  " do
+        it "there are no attributes for that assessment  " do
           expect(
             ActiveRecord::Base
               .connection
@@ -230,6 +233,18 @@ describe Gateway::AssessmentAttributesGateway do
               .rows
               .count,
           ).to eq(0)
+        end
+
+        it "there are attributes for other assessments " do
+          expect(
+            ActiveRecord::Base
+              .connection
+              .exec_query(
+                "SELECT * FROM assessment_attribute_values WHERE assessment_id ='0000-0000-0000-0000-0001'",
+              )
+              .rows
+              .count,
+          ).not_to eq(0)
         end
       end
     end

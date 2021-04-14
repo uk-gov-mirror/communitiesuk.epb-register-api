@@ -33,19 +33,24 @@ module Gateway
       ActiveRecord::Base.connection.exec_query(sql, "SQL", bindings)
     end
 
-    def fetch_assessment_attributes
+    def fetch_assessment_attributes(column_array)
       sql =
         "SELECT *
-              FROM crosstab('SELECT  assessment_id,  attribute_name, attribute_value
+              FROM crosstab('SELECT  assessment_id, attribute_name, attribute_value
               FROM assessment_attribute_values
               JOIN assessment_attributes ON assessment_attribute_values.attribute_id = assessment_attributes.attribute_id
               ORDER BY 1,2')
-            AS final_result(assessment_id varchar, construction_age_band varchar, glazed_type varchar)"
+            AS columns(#{set_columns(column_array)})"
 
       ActiveRecord::Base.connection.exec_query(sql, "SQL")
     end
 
   private
+
+    def set_columns(column_array)
+      columns = column_array.map { |name| name + " varchar" }
+      columns.join(", ")
+    end
 
     def fetch_attribute_id(attribute_name)
       sql = <<-SQL
