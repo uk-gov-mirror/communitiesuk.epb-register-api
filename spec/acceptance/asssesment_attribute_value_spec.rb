@@ -1,6 +1,6 @@
 require_relative "./reporting/open_data_export_test_helper"
 
-xdescribe "Acceptance::AssessmentAttributeValue" do
+describe "Acceptance::AssessmentAttributeValue" do
   include RSpecRegisterApiServiceMixin
 
   context "lodge an assessment from the xml " do

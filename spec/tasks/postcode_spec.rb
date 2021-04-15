@@ -2,7 +2,7 @@ require "rspec"
 
 FILE_NAME = "NSPL_MONTH_YEAR_UK.csv".freeze
 
-xdescribe "Postcode" do
+describe "Postcode" do
   include RSpecRegisterApiServiceMixin
 
   let(:postcode_gateway) { Gateway::PostcodesGateway.new }
