@@ -73,6 +73,7 @@ module Gateway
     end
 
   private
+
     def set_attribute_where_clause(column_array)
       new_array = column_array.clone
       new_array.reject! { |i| i == "assessment_id" }

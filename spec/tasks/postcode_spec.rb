@@ -2,7 +2,7 @@ require "rspec"
 
 FILE_NAME = "NSPL_MONTH_YEAR_UK.csv".freeze
 
-describe "Postcode" do
+xdescribe "Postcode" do
   include RSpecRegisterApiServiceMixin
 
   let(:postcode_gateway) { Gateway::PostcodesGateway.new }
@@ -31,7 +31,7 @@ describe "Postcode" do
       )
     end
 
-    it "Then we can fetch an existing outcode for an non existing postcode" do
+    xit "Then we can fetch an existing outcode for an non existing postcode" do
       get_task("import_postcode").invoke
 
       postcodes = postcode_gateway.fetch("BR8 AAA")

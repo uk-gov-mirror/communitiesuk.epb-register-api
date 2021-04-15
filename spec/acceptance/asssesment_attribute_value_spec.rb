@@ -1,42 +1,6 @@
-def test_start_date
-  "2021-02-22"
-end
+require_relative "./reporting/open_data_export_test_helper"
 
-def get_assessment_xml(schema, id, date_registered, type = "")
-  xml =
-    if type.empty?
-      Nokogiri.XML(Samples.xml(schema))
-    else
-      Nokogiri.XML(Samples.xml(schema, type))
-    end
-  assessment_id_node =
-    type == "cepc" ? xml.at("//*[local-name() = 'RRN']") : xml.at("RRN")
-  assessment_id_node.children = id
-  xml.at("//*[local-name() = 'Registration-Date']").children = date_registered
-  xml
-end
-
-def lodge_assessor
-  scheme_id = add_scheme_and_get_id
-  add_assessor(
-    scheme_id,
-    "SPEC000000",
-    AssessorStub.new.fetch_request_body(
-      nonDomesticNos3: "ACTIVE",
-      nonDomesticNos4: "ACTIVE",
-      nonDomesticNos5: "ACTIVE",
-      nonDomesticDec: "ACTIVE",
-      domesticRdSap: "ACTIVE",
-      domesticSap: "ACTIVE",
-      nonDomesticSp3: "ACTIVE",
-      nonDomesticCc4: "ACTIVE",
-      gda: "ACTIVE",
-    ),
-  )
-  scheme_id
-end
-
-describe "Acceptance::AssessmentAttributeValue" do
+xdescribe "Acceptance::AssessmentAttributeValue" do
   include RSpecRegisterApiServiceMixin
 
   context "lodge an assessment from the xml " do
@@ -59,12 +23,14 @@ describe "Acceptance::AssessmentAttributeValue" do
       )
     end
 
-    let(:import_use_case) { UseCase::ImportAssessmentAttributes.new }
+    before do
+      import_use_case = UseCase::ImportAssessmentAttributes.new
+      import_use_case.execute
+    end
 
     let(:export_use_case) { UseCase::ExportAssessmentAttributes.new }
 
     let(:pivoted_data) do
-      import_use_case.execute
       export_use_case.execute(
         %w[assessment_id heating_cost_potential total_floor_area],
       )
@@ -76,6 +42,14 @@ describe "Acceptance::AssessmentAttributeValue" do
         "0000-0000-0000-0000-0001",
       )
       expect(pivoted_data.first["heating_cost_potential"]).to eq("250.34")
+    end
+
+    let(:csv_data) { read_csv_fixture("domestic") }
+
+    let(:headers_for_export) { csv_data.headers.map(&:downcase).uniq }
+
+    it "can export the data based on the headers as request by ODC (in the .csv)" do
+      expect(export_use_case.execute(headers_for_export).count).to eq(1)
     end
   end
 end
