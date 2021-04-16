@@ -185,15 +185,17 @@ describe Gateway::AssessmentAttributesGateway do
       context "when fetching the pivoted data" do
         let(:pivoted_data) do
           gateway.fetch_assessment_attributes(
-            %w[assessment_id construction_age_band glazed_type],
+            %w[construction_age_band glazed_type],
           )
         end
 
         it "has the correct number of rows, one for each assessment" do
+          pp pivoted_data
           expect(pivoted_data.rows.count).to eq(3)
         end
 
         it "has the correct assessments" do
+          pp pivoted_data
           expect(pivoted_data[0]["assessment_id"]).to eq(
             "0000-0000-0000-0000-0001",
           )

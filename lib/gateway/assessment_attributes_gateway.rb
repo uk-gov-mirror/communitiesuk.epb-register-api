@@ -1,6 +1,7 @@
 module Gateway
   class AssessmentAttributesGateway
     # TODO: Add rrn constant and set to "asessement_id"
+    RRN = "assessment_id".freeze
 
     def add_attribute(attribute_name)
       attribute_data = fetch_attribute_id(attribute_name)
@@ -13,7 +14,7 @@ module Gateway
 
     def add_attribute_value(asessement_id, attribute_name, attribute_value)
       unless attribute_value.empty?
-        unless attribute_name.to_s == "assessment_id"
+        unless attribute_name.to_s == RRN
           ActiveRecord::Base.transaction do
             attribute_id = add_attribute(attribute_name)
             insert_attribute_value(asessement_id, attribute_id, attribute_value)
@@ -54,19 +55,35 @@ module Gateway
         .map { |result| result }
     end
 
-    def fetch_assessment_attributes(column_array)
-      # TODO: Update the order by to be a dymanic set based on array positions
-      # TODO ensure "assessment_id" is the first element in column_array
+    # SELECT hashed_assessment_id as assessment_id,
+    #        heating_cost_potential,
+    #         COALESCE(total_floor_area, null) as total_floor_area
+    #   FROM crosstab($$
+    # SELECT  assessment_id,  attribute_name, attribute_value
+    # FROM assessment_attribute_values
+    # JOIN assessment_attributes ON assessment_attribute_values.attribute_id = assessment_attributes.attribute_id
+    # WHERE assessment_attributes.attribute_name IN ('heating_cost_potential', 'total_floor_area')
+    #  ORDER BY assessment_id,
+    #     CASE attribute_name WHEN  CASE attribute_name WHEN  'hashed_assessment_id' THEN 1 WHEN 'heating_cost_potential' THEN 2 WHEN 'total_floor_area' THEN '3' WHEN 'posttown' THEN '4' ELSE 5 END
+    # $$)
+    # AS column_names(assessment_id varchar, heating_cost_potential varchar, total_floor_area varchar)
+
+    def fetch_assessment_attributes(column_array, hash_rrn = false)
+      column_array.insert(0, "hashed_asesssment_id") if hash_rrn
+      where_clause = attribute_where_clause(column_array)
+      number_attributes = where_clause.split(",").count
+      virtual_columns = virtual_column_types(column_array)
+      select = select_columns(column_array)
       sql = <<-SQL
-              SELECT *
+              SELECT #{select}
               FROM crosstab($$
               SELECT  assessment_id, attribute_name, attribute_value
               FROM assessment_attribute_values av
               JOIN assessment_attributes a ON av.attribute_id = a.attribute_id
-              WHERE a.attribute_name IN (#{set_attribute_where_clause(column_array)})
-              ORDER BY 1,2
+              WHERE a.attribute_name IN (#{where_clause})
+              ORDER BY assessment_id, #{order_sequence(column_array)}
               $$)
-            AS columns(#{set_columns(column_array)})
+            AS virtual_columns(#{virtual_columns})
       SQL
 
       ActiveRecord::Base.connection.exec_query(sql, "SQL")
@@ -74,16 +91,49 @@ module Gateway
 
   private
 
-    def set_attribute_where_clause(column_array)
+    def attribute_where_clause(column_array)
       new_array = column_array.clone
-      new_array.reject! { |i| i == "assessment_id" }
+      new_array.reject! { |i| i == RRN }
       new_array.map! { |i| "'#{i}'" }
       new_array.join(",")
     end
 
-    def set_columns(column_array)
-      columns = column_array.map { |name| name + " varchar" }
-      columns.join(", ")
+    def virtual_column_types(column_array)
+      new_array = column_array.clone.sort
+      new_array = rrn_into_array(new_array)
+      new_array.map! { |name| name + " varchar" }
+      new_array.join(", ")
+    end
+
+    def select_columns(column_array)
+      new_array = column_array.clone.sort
+      new_array.reject! { |i| i == RRN }
+      new_array.map { |item| "COALESCE(#{item}, null) AS #{item}" }
+      if column_array.first == "hashed_asesssment_id"
+        new_array.delete_at(0)
+        new_array.insert(0, "hashed_asesssment_id as #{RRN}")
+      else
+        new_array.insert(0, RRN)
+      end
+      new_array.join(",")
+    end
+
+    def order_sequence(column_array)
+      order_by_string = "CASE attribute_name "
+      column_array.each_with_index do |value, index|
+        order_by_string << " WHEN '#{value}' THEN #{(index + 1)}"
+      end
+      order_by_string << +" ELSE #{column_array.count + 1} END"
+    end
+
+    def rrn_into_array(column_array)
+      position = column_array.find_index(RRN)
+      if position.nil?
+        column_array.insert(0, RRN)
+      elsif position > 0
+        column_array.insert(0, column_array.delete_at(position))
+      end
+      column_array
     end
 
     def fetch_attribute_id(attribute_name)

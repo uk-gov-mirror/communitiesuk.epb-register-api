@@ -3,7 +3,7 @@ require_relative "./reporting/open_data_export_test_helper"
 describe "Acceptance::AssessmentAttributeValue" do
   include RSpecRegisterApiServiceMixin
 
-  context "lodge an assessment from the xml " do
+  context "When lodging assessment data import into EAV and export using data pivot " do
     before(:all) do
       scheme_id = lodge_assessor
       domestic_rdsap_xml =
@@ -31,25 +31,19 @@ describe "Acceptance::AssessmentAttributeValue" do
     let(:export_use_case) { UseCase::ExportAssessmentAttributes.new }
 
     let(:pivoted_data) do
-      export_use_case.execute(
-        %w[assessment_id heating_cost_potential total_floor_area],
-      )
-    end
-
-    it "will contain a row for one assesment" do
-      expect(pivoted_data.length).to eq(1)
-      expect(pivoted_data.first["assessment_id"]).to eq(
-        "0000-0000-0000-0000-0001",
-      )
-      expect(pivoted_data.first["heating_cost_potential"]).to eq("250.34")
+      export_use_case.execute(%w[heating_cost_potential total_floor_area], true)
     end
 
     let(:csv_data) { read_csv_fixture("domestic") }
 
     let(:headers_for_export) { csv_data.headers.map(&:downcase).uniq }
 
-    it "can export the data based on the headers as request by ODC (in the .csv)" do
-      expect(export_use_case.execute(headers_for_export).count).to eq(1)
+    let(:exported_data) do
+      export_use_case.execute(headers_for_export, true)
+    end
+
+    it "can export the data based on the headers requested by ODC (in the .csv)" do
+      expect(exported_data.count).to eq(1)
     end
   end
 end

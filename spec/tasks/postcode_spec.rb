@@ -21,7 +21,7 @@ describe "Postcode" do
       HttpStub.s3_get_object(FILE_NAME, get_postcode_csv)
     end
 
-    it "Then we can fetch an existing postcode" do
+    xit "Then we can fetch an existing postcode" do
       get_task("import_postcode").invoke
 
       postcodes = postcode_gateway.fetch("BR8 7QP")

@@ -26,6 +26,11 @@ module UseCase
             value,
           )
         end
+        @assessment_attribute_gateway.add_attribute_value(
+          assessment["assessment_id"],
+          "hashed_assessment_id",
+          Helper::RrnHelper.hash_rrn(assessment["assessment_id"]),
+        )
       end
     end
   end
