@@ -2,6 +2,12 @@ module Gateway
   class AssessmentAttributesGateway
     # TODO: Add rrn constant and set to "asessement_id"
     RRN = "assessment_id".freeze
+    HASH_RRN = "hashed_assessment_id".freeze
+    attr_accessor :attribute_columns_array
+
+    def initialize
+      @attribute_columns_array = []
+    end
 
     def add_attribute(attribute_name)
       attribute_data = fetch_attribute_id(attribute_name)
@@ -68,20 +74,20 @@ module Gateway
     # $$)
     # AS column_names(assessment_id varchar, heating_cost_potential varchar, total_floor_area varchar)
 
-    def fetch_assessment_attributes(column_array, hash_rrn = false)
-      column_array.insert(0, "hashed_asesssment_id") if hash_rrn
-      where_clause = attribute_where_clause(column_array)
+    def fetch_assessment_attributes(attribute_column_array)
+      @attribute_columns_array = attribute_column_array.sort
+      where_clause = attribute_where_clause
       number_attributes = where_clause.split(",").count
-      virtual_columns = virtual_column_types(column_array)
-      select = select_columns(column_array)
+      virtual_columns = virtual_column_types
+      select = select_columns
       sql = <<-SQL
-              SELECT #{select}
+              SELECT assessment_id, #{select}
               FROM crosstab($$
               SELECT  assessment_id, attribute_name, attribute_value
               FROM assessment_attribute_values av
               JOIN assessment_attributes a ON av.attribute_id = a.attribute_id
               WHERE a.attribute_name IN (#{where_clause})
-              ORDER BY assessment_id, #{order_sequence(column_array)}
+              ORDER BY assessment_id, #{order_sequence}
               $$)
             AS virtual_columns(#{virtual_columns})
       SQL
@@ -91,39 +97,31 @@ module Gateway
 
   private
 
-    def attribute_where_clause(column_array)
-      new_array = column_array.clone
-      new_array.reject! { |i| i == RRN }
+    def attribute_where_clause
+      new_array = @attribute_columns_array.clone
       new_array.map! { |i| "'#{i}'" }
       new_array.join(",")
     end
 
-    def virtual_column_types(column_array)
-      new_array = column_array.clone.sort
+    def virtual_column_types
+      new_array = @attribute_columns_array.clone
       new_array = rrn_into_array(new_array)
       new_array.map! { |name| name + " varchar" }
       new_array.join(", ")
     end
 
-    def select_columns(column_array)
-      new_array = column_array.clone.sort
-      new_array.reject! { |i| i == RRN }
-      new_array.map { |item| "COALESCE(#{item}, null) AS #{item}" }
-      if column_array.first == "hashed_asesssment_id"
-        new_array.delete_at(0)
-        new_array.insert(0, "hashed_asesssment_id as #{RRN}")
-      else
-        new_array.insert(0, RRN)
-      end
-      new_array.join(",")
+    def select_columns
+      select_array = @attribute_columns_array.clone
+      select_array.map! { |item| " COALESCE(#{item}, null) AS #{item} " }
+      select_array.join(",")
     end
 
-    def order_sequence(column_array)
+    def order_sequence
       order_by_string = "CASE attribute_name "
-      column_array.each_with_index do |value, index|
+      @attribute_columns_array.each_with_index do |value, index|
         order_by_string << " WHEN '#{value}' THEN #{(index + 1)}"
       end
-      order_by_string << +" ELSE #{column_array.count + 1} END"
+      order_by_string << +" ELSE #{@attribute_columns_array.count + 1} END"
     end
 
     def rrn_into_array(column_array)

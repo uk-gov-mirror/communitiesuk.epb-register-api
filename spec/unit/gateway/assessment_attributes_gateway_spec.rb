@@ -74,11 +74,12 @@ describe Gateway::AssessmentAttributesGateway do
 
       let(:assessement_attribute_values) do
         ActiveRecord::Base.connection.exec_query(
-          "SELECT * FROM assessment_attribute_values WHERE assessment_id= '0000-0000-0000-0000-0001'",
+          "SELECT * FROM assessment_attribute_values WHERE assessment_id= '0000-0000-0000-0000-0001'
+          ORDER BY attribute_id",
         )
       end
 
-      it "returns the current rows for this assessment" do
+      it "returns a row for every attributes" do
         expect(assessement_attribute_values.rows.length).to eq(4)
       end
 

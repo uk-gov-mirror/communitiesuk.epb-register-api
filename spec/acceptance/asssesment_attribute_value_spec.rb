@@ -9,7 +9,7 @@ describe "Acceptance::AssessmentAttributeValue" do
       domestic_rdsap_xml =
         get_assessment_xml(
           "RdSAP-Schema-20.0.0",
-          "0000-0000-0000-0000-0001",
+          "0000-0000-0000-0000-0004",
           test_start_date,
         )
 
@@ -30,20 +30,17 @@ describe "Acceptance::AssessmentAttributeValue" do
 
     let(:export_use_case) { UseCase::ExportAssessmentAttributes.new }
 
-    let(:pivoted_data) do
-      export_use_case.execute(%w[heating_cost_potential total_floor_area], true)
-    end
-
     let(:csv_data) { read_csv_fixture("domestic") }
 
     let(:headers_for_export) { csv_data.headers.map(&:downcase).uniq }
 
-    let(:exported_data) do
-      export_use_case.execute(headers_for_export, true)
-    end
+    let(:exported_data) { export_use_case.execute(headers_for_export, true) }
 
     it "can export the data based on the headers requested by ODC (in the .csv)" do
       expect(exported_data.count).to eq(1)
+      expect(exported_data.first["assessment_id"]).to eq(
+        "5cb9fa3be789df637c7c20acac4e19c5ebf691f0f0d78f2a1b5f30c8b336bba6",
+      )
     end
   end
 end
