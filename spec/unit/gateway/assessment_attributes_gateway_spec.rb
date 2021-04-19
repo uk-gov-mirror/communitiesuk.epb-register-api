@@ -230,7 +230,7 @@ describe Gateway::AssessmentAttributesGateway do
           )
         end
 
-        it "can perform simple data aggregations by calucating the SUM and average of a value" do
+        it "can perform simple data aggregations by calculating the sum and average of 'heating_cost_current' " do
           expect(calculated_value["sum_heating"]).to eq(32.98)
           expect(calculated_value["avg_heating"].to_f).to eq(10.99)
         end
