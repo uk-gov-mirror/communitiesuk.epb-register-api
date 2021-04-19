@@ -2,7 +2,6 @@ module Gateway
   class AssessmentAttributesGateway
     # TODO: Add rrn constant and set to "asessement_id"
     RRN = "assessment_id".freeze
-    HASH_RRN = "hashed_assessment_id".freeze
     attr_accessor :attribute_columns_array
 
     def initialize
@@ -19,7 +18,7 @@ module Gateway
     end
 
     def add_attribute_value(asessement_id, attribute_name, attribute_value)
-      unless attribute_value.empty?
+      unless attribute_value.to_s.empty?
         unless attribute_name.to_s == RRN
           ActiveRecord::Base.transaction do
             attribute_id = add_attribute(attribute_name)
@@ -61,38 +60,38 @@ module Gateway
         .map { |result| result }
     end
 
-    # SELECT hashed_assessment_id as assessment_id,
-    #        heating_cost_potential,
-    #         COALESCE(total_floor_area, null) as total_floor_area
-    #   FROM crosstab($$
-    # SELECT  assessment_id,  attribute_name, attribute_value
-    # FROM assessment_attribute_values
-    # JOIN assessment_attributes ON assessment_attribute_values.attribute_id = assessment_attributes.attribute_id
-    # WHERE assessment_attributes.attribute_name IN ('heating_cost_potential', 'total_floor_area')
-    #  ORDER BY assessment_id,
-    #     CASE attribute_name WHEN  CASE attribute_name WHEN  'hashed_assessment_id' THEN 1 WHEN 'heating_cost_potential' THEN 2 WHEN 'total_floor_area' THEN '3' WHEN 'posttown' THEN '4' ELSE 5 END
-    # $$)
-    # AS column_names(assessment_id varchar, heating_cost_potential varchar, total_floor_area varchar)
-
     def fetch_assessment_attributes(attribute_column_array)
+      # SELECT *
+      # FROM crosstab($$
+      # SELECT  assessment_id, attribute_name, attribute_value
+      # FROM assessment_attribute_values av
+      # JOIN assessment_attributes a ON av.attribute_id = a.attribute_id
+      # WHERE a.attribute_name IN ('address2','address3','address1', 'building_reference_number')
+      # ORDER BY assessment_id, CASE attribute_name WHEN 'address1' THEN 1 WHEN 'address2' THEN 2 WHEN 'address3' THEN 3 ELSE 4 END
+      # $$,
+      # $$ SELECT * FROM ( values ('address1'), ('address2'), ('address3'), ('building_reference_number') ) a $$)
+      # AS virtual_columns(assessment_id varchar, address1 varchar, address2 varchar, address3 varchar, building_reference_number varchar)
+
       @attribute_columns_array = attribute_column_array.sort
       where_clause = attribute_where_clause
       number_attributes = where_clause.split(",").count
       virtual_columns = virtual_column_types
-      select = select_columns
       sql = <<-SQL
-              SELECT assessment_id, #{select}
-              FROM crosstab($$
+              SELECT *
+              FROM crosstab(
+              $$
               SELECT  assessment_id, attribute_name, attribute_value
               FROM assessment_attribute_values av
               JOIN assessment_attributes a ON av.attribute_id = a.attribute_id
               WHERE a.attribute_name IN (#{where_clause})
               ORDER BY assessment_id, #{order_sequence}
-              $$)
+              $$,
+              $$ SELECT * FROM (values #{select_columns}) a $$)
             AS virtual_columns(#{virtual_columns})
       SQL
 
-      ActiveRecord::Base.connection.exec_query(sql, "SQL")
+      results = ActiveRecord::Base.connection.exec_query(sql, "SQL")
+      results.map { |result| result }
     end
 
   private
@@ -111,8 +110,7 @@ module Gateway
     end
 
     def select_columns
-      select_array = @attribute_columns_array.clone
-      select_array.map! { |item| " COALESCE(#{item}, null) AS #{item} " }
+      select_array = @attribute_columns_array.map { |item| "('#{item}')" }
       select_array.join(",")
     end
 

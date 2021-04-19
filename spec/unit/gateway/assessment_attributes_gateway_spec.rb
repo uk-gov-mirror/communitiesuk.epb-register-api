@@ -191,8 +191,7 @@ describe Gateway::AssessmentAttributesGateway do
         end
 
         it "has the correct number of rows, one for each assessment" do
-          pp pivoted_data
-          expect(pivoted_data.rows.count).to eq(3)
+          expect(pivoted_data.count).to eq(3)
         end
 
         it "has the correct assessments" do
