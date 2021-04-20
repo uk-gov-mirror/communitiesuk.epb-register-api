@@ -61,7 +61,7 @@ module Gateway
     end
 
     def fetch_assessment_attributes(attribute_column_array)
-      # SELECT *
+      # SELECT assessment_id, COALESCE(address1, '') as address1, COALESCE(address2, '') as address2, COALESCE(address3, '') as address3, , COALESCE(building_reference_number, '') as building_reference_number
       # FROM crosstab($$
       # SELECT  assessment_id, attribute_name, attribute_value
       # FROM assessment_attribute_values av
@@ -74,10 +74,9 @@ module Gateway
 
       @attribute_columns_array = attribute_column_array.sort
       where_clause = attribute_where_clause
-      number_attributes = where_clause.split(",").count
       virtual_columns = virtual_column_types
       sql = <<-SQL
-              SELECT *
+              SELECT assessment_id, #{coalesce_colums}
               FROM crosstab(
               $$
               SELECT  assessment_id, attribute_name, attribute_value
@@ -112,6 +111,14 @@ module Gateway
     def select_columns
       select_array = @attribute_columns_array.map { |item| "('#{item}')" }
       select_array.join(",")
+    end
+
+    def coalesce_colums
+      select_array =
+        @attribute_columns_array.map do |item|
+          "COALESCE(#{item}, '') as #{item}"
+        end
+      select_array.join(", ")
     end
 
     def order_sequence

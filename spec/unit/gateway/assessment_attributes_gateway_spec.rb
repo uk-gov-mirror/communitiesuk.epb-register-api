@@ -265,6 +265,9 @@ describe Gateway::AssessmentAttributesGateway do
           ).not_to eq(0)
         end
       end
+
+      context "when adding duplicate assessment attribute values" do
+      end
     end
   end
 end
