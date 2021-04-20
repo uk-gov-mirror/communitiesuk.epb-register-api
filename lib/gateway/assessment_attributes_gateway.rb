@@ -93,6 +93,48 @@ module Gateway
       results.map { |result| result }
     end
 
+    def fetch_sum(attribute_name, value_type = "int")
+      sql = <<-SQL
+        SELECT SUM(eav.attribute_value_#{value_type}) as #{attribute_name}
+        FROM assessment_attributes a
+        JOIN assessment_attribute_values eav ON a.attribute_id = eav.attribute_id
+        WHERE a.attribute_name = $1
+      SQL
+
+      bindings = [
+        ActiveRecord::Relation::QueryAttribute.new(
+          "attribute_name",
+          attribute_name,
+          ActiveRecord::Type::String.new,
+        ),
+      ]
+
+      ActiveRecord::Base.connection.exec_query(sql, "SQL", bindings).first[
+        attribute_name
+      ]
+    end
+
+    def fetch_average(attribute_name, value_type = "int")
+      sql = <<-SQL
+        SELECT   to_char( AVG(attribute_value_#{value_type}), 'FM999999999.00') as #{attribute_name}
+        FROM assessment_attributes a
+        JOIN assessment_attribute_values eav ON a.attribute_id = eav.attribute_id
+        WHERE a.attribute_name = $1
+      SQL
+
+      bindings = [
+        ActiveRecord::Relation::QueryAttribute.new(
+          "attribute_name",
+          attribute_name,
+          ActiveRecord::Type::String.new,
+        ),
+      ]
+
+      ActiveRecord::Base.connection.exec_query(sql, "SQL", bindings).first[
+        attribute_name
+      ]
+    end
+
   private
 
     def attribute_where_clause

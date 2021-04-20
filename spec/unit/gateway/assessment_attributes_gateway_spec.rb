@@ -190,18 +190,6 @@ describe Gateway::AssessmentAttributesGateway do
           )
         end
 
-        let(:calculated_value) do
-          ActiveRecord::Base
-            .connection
-            .exec_query(
-              "SELECT SUM(eav.attribute_value_float) as sum_heating,  to_char( AVG(attribute_value_float), 'FM999999999.00')  avg_heating
-              FROM assessment_attributes a
-              JOIN assessment_attribute_values eav ON a.attribute_id = eav.attribute_id
-              WHERE a.attribute_name = 'heating_cost_current'",
-            )
-            .first
-        end
-
         it "has the correct number of rows, one for each assessment" do
           expect(pivoted_data.count).to eq(3)
         end
@@ -231,8 +219,15 @@ describe Gateway::AssessmentAttributesGateway do
         end
 
         it "can perform simple data aggregations by calculating the sum and average of 'heating_cost_current' " do
-          expect(calculated_value["sum_heating"]).to eq(32.98)
-          expect(calculated_value["avg_heating"].to_f).to eq(10.99)
+          expect(gateway.fetch_sum("heating_cost_current", "float")).to eq(
+            32.98,
+          )
+        end
+
+        it "can perform simple data aggregations by calculating the sum and average of 'heating_cost_current' " do
+          expect(
+            gateway.fetch_average("heating_cost_current", "float").to_f,
+          ).to eq(10.99)
         end
       end
 
